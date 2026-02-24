@@ -1,4 +1,7 @@
+// Package utilx tiene varios utilidades
 package utilx
+
+import "database/sql"
 
 // DerefString devuelve el valor string o "" si es nil
 func DerefString(s *string) string {
@@ -6,6 +9,14 @@ func DerefString(s *string) string {
 		return ""
 	}
 	return *s
+}
+
+// StringPointer devuelve el valor string o  nil
+func StringPointer(ns sql.NullString) *string {
+	if ns.Valid {
+		return &ns.String
+	}
+	return nil
 }
 
 // DerefStringWithDefault devuelve el valor string o un valor por defecto
