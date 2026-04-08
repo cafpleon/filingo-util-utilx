@@ -47,3 +47,14 @@ func DerefBool(b *bool) bool {
 func ToPtr[T any](v T) *T {
 	return &v
 }
+
+// CompareStringPointers para comparar strings pointers
+func CompareStringPointers(a, b *string) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	return *a == *b
+}
