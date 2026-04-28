@@ -19,6 +19,11 @@ func StringPointer(ns sql.NullString) *string {
 	return nil
 }
 
+// NullStringToPointer devuelve el valor string o  nil
+func NullStringToPointer(ns sql.NullString) *string {
+	return StringPointer(ns)
+}
+
 // DerefStringWithDefault devuelve el valor string o un valor por defecto
 func DerefStringWithDefault(s *string, def string) string {
 	if s == nil {
