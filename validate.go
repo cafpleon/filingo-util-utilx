@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/gofrs/uuid/v5"
 )
 
 // Required valida que un string no esté vacío (tras trim)
@@ -16,7 +18,7 @@ func Required(value, fieldName string) error {
 }
 
 // RequiredWithCustomMsg permite mensaje personalizado
-func RequiredWithCustomMsg(value, fieldName string, customMsg string, args ...interface{}) error {
+func RequiredWithCustomMsg(value, fieldName string, customMsg string, args ...any) error {
 	if strings.TrimSpace(value) == "" {
 		if customMsg != "" {
 			if len(args) > 0 {
@@ -68,4 +70,21 @@ func EnumCaseInsensitive(value string, validValues []string, fieldName string) e
 		}
 	}
 	return fmt.Errorf("campo '%s' tiene valor inválido '%s'", fieldName, value)
+}
+
+// ValidateUUID verifica que el string tenga un formato UUID válido (versión 4 o cualquier UUID estándar).
+// Retorna error si es inválido o si es el UUID cero (opcional, según tu regla de negocio).
+func ValidateUUID(s string) error {
+	if s == "" {
+		return fmt.Errorf("UUID no puede estar vacío")
+	}
+	_, err := uuid.FromString(s)
+	if err != nil {
+		return fmt.Errorf("formato UUID inválido: %s", s)
+	}
+	// Opcional: si quieres rechazar el UUID cero (00000000-0000-0000-0000-000000000000)
+	// if u == uuid.Nil {
+	// 	return fmt.Errorf("UUID no puede ser el valor cero")
+	// }
+	return nil
 }
