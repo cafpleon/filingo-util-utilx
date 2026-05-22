@@ -3,7 +3,7 @@ package utilx
 
 import "database/sql"
 
-// DerefString devuelve el valor string o "" si es nil
+// DerefString (dereference string) devuelve el valor string o "" si es nil
 func DerefString(s *string) string {
 	if s == nil {
 		return ""
@@ -24,7 +24,7 @@ func NullStringToPointer(ns sql.NullString) *string {
 	return StringPointer(ns)
 }
 
-// DerefStringWithDefault devuelve el valor string o un valor por defecto
+// DerefStringWithDefault (dereference string) devuelve el valor string o un valor por defecto
 func DerefStringWithDefault(s *string, def string) string {
 	if s == nil {
 		return def
@@ -32,7 +32,7 @@ func DerefStringWithDefault(s *string, def string) string {
 	return *s
 }
 
-// DerefInt devuelve el valor int o 0 si es nil
+// DerefInt (dereference integer) devuelve el valor int o 0 si es nil
 func DerefInt(i *int) int {
 	if i == nil {
 		return 0
@@ -40,7 +40,7 @@ func DerefInt(i *int) int {
 	return *i
 }
 
-// DerefBool devuelve el valor bool o false si es nil
+// DerefBool (dereference booleano) devuelve el valor bool o false si es nil
 func DerefBool(b *bool) bool {
 	if b == nil {
 		return false
