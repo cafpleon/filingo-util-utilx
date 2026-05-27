@@ -38,7 +38,12 @@ func GetActorID(ctx context.Context) (uuid.UUID, error) {
 	if !ok {
 		// Opcional: Si el middleware lo guarda como string, intentamos parsearlo
 		if strVal, ok := val.(string); ok {
-			return uuid.FromString(strVal)
+			val, err := uuid.FromString(strVal)
+			if err != nil {
+				return uuid.Nil, fmt.Errorf("el valor de actor_id en el contexto no es un UUID válido: %w", err)
+			} else {
+				return val, nil
+			}
 		}
 		return uuid.Nil, fmt.Errorf("el valor de actor_id en el contexto no es un UUID válido")
 	}
