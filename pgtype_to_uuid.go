@@ -1,8 +1,9 @@
 package utilx
 
 import (
-	"fmt"
+	//"fmt"
 
+	util_errors "github.com/cafpleon/filingo-util-errors"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -12,7 +13,8 @@ func PgtypeToUUID(pgUUID pgtype.UUID) (uuid.UUID, error) {
 		// pgtype.UUID.Bytes es un [16]byte, que es exactamente lo que necesita uuid.FromBytes
 		return uuid.FromBytes(pgUUID.Bytes[:])
 	} else {
-		return uuid.Nil, fmt.Errorf("UUID no presente (NULL)")
+		//return uuid.Nil, fmt.Errorf("UUID no presente (NULL)")
+		return uuid.Nil, util_errors.ErrUUIDNotPresent //"UUID no presente (NULL)")
 	}
 }
 
