@@ -92,8 +92,81 @@ func ValidateNumericFilter[T Number](fieldName string, exact, min, max *T, maxAl
 	return nil
 }
 
-// ValidateStringFilter limpia y valida los filtros de texto de forma segura.
+// ValidateStringFilter limpia y valida los filtros de texto de forma segura
+// antes de que sean utilizados en consultas a la base de datos.
 // Acepta punteros para poder modificar (TrimSpace) los valores originales del struct.
+//
+// La función recibe las tres variantes de filtro (exact, contains, prefix)
+// como punteros para poder normalizarlas in-place (aplicando TrimSpace) y
+// garantizar que el llamador trabaje con valores ya saneados. Acepta `nil`
+// en cualquiera de las tres variantes, lo que significa que ese filtro no
+// fue proporcionado por el cliente.
+//
+// # Parámetros
+//
+//   - fieldName: nombre lógico del campo (ej. "name", "cityCode"). Se usa
+//     únicamente para construir mensajes de error claros hacia el usuario.
+//   - exact: filtro de coincidencia exacta. Ej: `WHERE col = 'valor'`.
+//   - contains: filtro de subcadena. Ej: `WHERE col LIKE '%valor%'`.
+//   - prefix: filtro de prefijo. Ej: `WHERE col LIKE 'valor%'`.
+//   - minPartialLen: longitud mínima requerida para filtros parciales
+//     (contains y prefix). Previene ataques de denegación de servicio
+//     basados en consultas LIKE con cadenas muy cortas que escanean toda
+//     la tabla.
+//   - maxLen: longitud máxima permitida para cualquier filtro. Previene
+//     ataques de agotamiento de memoria.
+//
+// # Comportamiento
+//
+//  1. Limpieza: aplica `strings.TrimSpace` a cada variante no nula,
+//     eliminando espacios al inicio y al final. Esto evita falsos positivos
+//     y normaliza la entrada del usuario.
+//
+//  2. Exclusión mutua: solo se permite UNA variante activa por campo. Si
+//     el cliente envía más de una (ej. `exact` y `contains` al mismo
+//     tiempo), se retorna un error. Esto previene consultas ambiguas y
+//     comportamientos inesperados en la capa de persistencia.
+//
+//  3. Validaciones de seguridad:
+//     - Longitud máxima (`maxLen`): defensa contra DoS por consumo de
+//     memoria en consultas con cadenas gigantes.
+//     - Longitud mínima para parciales (`minPartialLen`): defensa contra
+//     DoS por CPU/Disco, ya que `LIKE '%a%'` puede escanear toda la
+//     tabla sin usar índices.
+//     - Anti-wildcards (`%` y `_`): defensa contra inyección de patrones
+//     SQL. Estos caracteres tienen significado especial en `LIKE` y
+//     permitir su paso podría alterar la semántica de la consulta.
+//
+// # Retorno
+//
+//   - `nil` si todos los filtros presentes son válidos.
+//   - Un `error` descriptivo si:
+//   - Hay conflicto de variantes (más de una activa).
+//   - Se excede `maxLen`.
+//   - Un filtro parcial es más corto que `minPartialLen`.
+//   - Se detectan caracteres wildcard prohibidos.
+//
+// # Ejemplo de uso
+//
+//	var nameExact, nameContains *string
+//	nameExact = ptr("  Medellín  ") // será limpiado a "Medellín"
+//
+//	if err := ValidateStringFilter("name", nameExact, nil, nil, 3, 100); err != nil {
+//	    return fmt.Errorf("validando filtro name: %w", err)
+//	}
+//	// nameExact ahora apunta a "Medellín", listo para usarse en el repositorio.
+//
+// # Consideraciones de seguridad
+//
+// Esta función implementa defensas en profundidad contra:
+//   - SQL Injection basada en wildcards (`%`, `_`).
+//   - DoS por consultas costosas (LIKE con cadenas cortas).
+//   - DoS por agotamiento de memoria (cadenas muy largas).
+//   - Ataques de ambigüedad (múltiples filtros simultáneos).
+//
+// NOTA: Esta función NO sustituye el uso de consultas parametrizadas.
+// Siempre debes usar placeholders (`$1`, `?`) en las consultas SQL; esta
+// validación es una capa adicional de defensa, no la única.
 func ValidateStringFilter(fieldName string, exact, contains, prefix *string, minPartialLen, maxLen int) error {
 	count := 0
 	var activeVal string
